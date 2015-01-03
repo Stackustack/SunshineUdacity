@@ -1,15 +1,18 @@
 package com.stackustack.sunshine_udacity;
 
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+import android.widget.ArrayAdapter;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -59,6 +62,23 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+
+            String[] examplesOfWeatherForTextView = {
+                    "Pon - 3*C - opady",
+                    "Wto - -13*C - śnieg",
+                    "Sro - 0*C - mgła",
+                    "Czw - 1*C - śłońce",
+                    "Pią - -3*C - śnieg"
+            };
+
+            List<String> listOfExamplesForWeatherTextView = new ArrayList<String>(Arrays.asList(examplesOfWeatherForTextView));
+            ArrayAdapter<String> mForecastAdapter = new ArrayAdapter<String>(
+                    getActivity(),
+                    R.layout.list_item_forecast,
+                    R.id.listview_forecast,
+                    listOfExamplesForWeatherTextView
+                    );
+
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             return rootView;
         }
