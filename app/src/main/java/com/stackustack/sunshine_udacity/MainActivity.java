@@ -75,7 +75,7 @@ public class MainActivity extends ActionBarActivity {
             };
 
             List<String> listOfExamplesForWeatherTextView = new ArrayList<String>(Arrays.asList(examplesOfWeatherForTextView));
-            ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, listOfExamplesForWeatherTextView);
+            ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, listOfExamplesForWeatherTextView);
 
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
