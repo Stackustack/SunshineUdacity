@@ -14,6 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,12 +85,56 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
+    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
+        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
+
+            final String OWM_list = "list";
+            final String OWM_weather = "weather";
+            final String OWM_desciptionshort = "main";
+            final String OWM_temperature = "temp";
+
+
+            JSONObject forecastJson = new JSONObject(forecastJsonStr);
+            JSONArray listDayJson = forecastJson.getJSONArray(OWM_list);
+
+
+            String[] resultStrs = new String[numDays];
+            for(int i=0; i < listDayJson.length() ;i++) {
+                String description;
+                String highAndLowTemperature;
+                String day = "";
+
+                JSONObject singleDayJson = listDayJson.getJSONObject(i);
+
+
+                //wyciągniecie opisu (main) listArray[i].weatherArray[0].main
+                JSONObject weatherForSingleDayJson = singleDayJson.getJSONArray(OWM_weather).getJSONObject(0);
+                description = weatherForSingleDayJson.getString(OWM_desciptionshort);
+
+                // wyciągniecie czasu w formacie "DzienTygodnia Miesiąc/Dzień
+
+
+                // wyciągniecie tempMax/tempMin - listArray[i].tempObject.min/max
+                JSONObject temperatureForSingleDayJson = singleDayJson.getJSONObject(OWM_temperature);
+                double low = temperatureForSingleDayJson.getDouble("min");
+                double high = temperatureForSingleDayJson.getDouble("max");
+                highAndLowTemperature = high + "/" + low;
+
+                resultStrs[i] = day + " - " + description + " - " + highAndLowTemperature;
+            }
+
+            for(String s : resultStrs) {
+                Log.v(LOG_TAG, "SUNSHINE SINGLE ENTRY: " + s);
+            }
+
+            return resultStrs;
+        }
+
         @Override
-        protected Void doInBackground(String... params) {
+        protected String[] doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -160,6 +208,12 @@ public class ForecastFragment extends Fragment {
                         Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
+            }
+            try {
+                return getWeatherDataFromJson(forecastJsonStr, numDays);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
             }
             return null;
         }
