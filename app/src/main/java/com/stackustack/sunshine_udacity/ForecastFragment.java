@@ -91,10 +91,10 @@ public class ForecastFragment extends Fragment {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-        private String getReadableDateAndTimeFromUnix(long time) {
-            Date date = new Date(time * 1000);
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("E d/MM/yy");
-            return simpleFormat.format(date).toString();
+        private String getReadableDateAndTimeFromUnix(long timeInUnixFomatInSeconds) {
+            Date timeInUnixFormatInMiliseconds = new Date(timeInUnixFomatInSeconds * 1000); //Java is expecting time in miliseconds, and since Unix format gives seconds we need to multiply by 1000
+            SimpleDateFormat simpleFormatOfDayAndTime = new SimpleDateFormat("E d/MM/yy");
+            return simpleFormatOfDayAndTime.format(timeInUnixFormatInMiliseconds).toString();
         }
 
         private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
