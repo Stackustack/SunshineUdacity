@@ -24,8 +24,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,7 +55,7 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
-            fetchWeatherTask.execute("94042");
+            fetchWeatherTask.execute("Poznan,pl");
             return true;
         }
 
@@ -89,12 +91,19 @@ public class ForecastFragment extends Fragment {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
+        private String getReadableDateAndTimeFromUnix(long time) {
+            Date date = new Date(time * 1000);
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("E d/MM/yy");
+            return simpleFormat.format(date).toString();
+        }
+
         private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
 
             final String OWM_list = "list";
             final String OWM_weather = "weather";
             final String OWM_desciptionshort = "main";
             final String OWM_temperature = "temp";
+            final String OWM_unitdatetime = "dt";
 
 
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
@@ -105,7 +114,7 @@ public class ForecastFragment extends Fragment {
             for(int i=0; i < listDayJson.length() ;i++) {
                 String description;
                 String highAndLowTemperature;
-                String day = "";
+                String dayAndTime;
 
                 JSONObject singleDayJson = listDayJson.getJSONObject(i);
 
@@ -114,7 +123,9 @@ public class ForecastFragment extends Fragment {
                 JSONObject weatherForSingleDayJson = singleDayJson.getJSONArray(OWM_weather).getJSONObject(0);
                 description = weatherForSingleDayJson.getString(OWM_desciptionshort);
 
-                // wyciągniecie czasu w formacie "DzienTygodnia Miesiąc/Dzień
+                // wyciągniecie czasu w formacie "Mon 5/24" ->
+                long dateAndTimeInUnixJson = singleDayJson.getLong(OWM_unitdatetime);
+                dayAndTime = getReadableDateAndTimeFromUnix(dateAndTimeInUnixJson);
 
 
                 // wyciągniecie tempMax/tempMin - listArray[i].tempObject.min/max
@@ -123,11 +134,11 @@ public class ForecastFragment extends Fragment {
                 double high = temperatureForSingleDayJson.getDouble("max");
                 highAndLowTemperature = high + "/" + low;
 
-                resultStrs[i] = day + " - " + description + " - " + highAndLowTemperature;
+                resultStrs[i] = dayAndTime + " - " + description + " - " + highAndLowTemperature;
             }
 
             for(String s : resultStrs) {
-                Log.v(LOG_TAG, "SUNSHINE SINGLE ENTRY: " + s);
+                Log.v(LOG_TAG, "SUNSHINE single weather entry for day: " + s);
             }
 
             return resultStrs;
