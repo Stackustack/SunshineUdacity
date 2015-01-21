@@ -130,8 +130,8 @@ public class ForecastFragment extends Fragment {
 
                 // wyciągniecie tempMax/tempMin - listArray[i].tempObject.min/max
                 JSONObject temperatureForSingleDayJson = singleDayJson.getJSONObject(OWM_temperature);
-                double low = temperatureForSingleDayJson.getDouble("min");
-                double high = temperatureForSingleDayJson.getDouble("max");
+                long low = Math.round(temperatureForSingleDayJson.getDouble("min"));
+                long high = Math.round(temperatureForSingleDayJson.getDouble("max"));
                 highAndLowTemperature = high + "/" + low;
 
                 resultStrs[i] = dayAndTime + " - " + description + " - " + highAndLowTemperature;
