@@ -91,53 +91,45 @@ public class ForecastFragment extends Fragment {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-        private String getReadableDateAndTimeFromUnix(long timeInUnixFomatInSeconds) {
-            Date timeInUnixFormatInMiliseconds = new Date(timeInUnixFomatInSeconds * 1000); //Java is expecting time in miliseconds, and since Unix format gives seconds we need to multiply by 1000
-            SimpleDateFormat simpleFormatOfDayAndTime = new SimpleDateFormat("E, d/MM/yy");
-            return simpleFormatOfDayAndTime.format(timeInUnixFormatInMiliseconds).toString();
-        }
-
-        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
-
-            final String OWM_list = "list";
-            final String OWM_weather = "weather";
-            final String OWM_desciptionshort = "main";
+        private String getReadableMinMaxTemperatureRoundedFromSingleDayJson(JSONObject singleDayJson) throws JSONException {
             final String OWM_temperature = "temp";
-            final String OWM_unitdatetime = "dt";
             final String OWM_maxtemperature = "max";
             final String OWM_mintemperature = "min";
 
+            JSONObject temperatureForSingleDayJson = singleDayJson.getJSONObject(OWM_temperature);
+            long lowestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_mintemperature));
+            long highestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_maxtemperature));
+            return highestTemperatureRounded + "/" + lowestTemperatureRounded;
+        }
+
+        private String getReadableDateAndTimeFromSingleDayJson(JSONObject singleDayJson) throws JSONException {
+            final String OWM_UnixTimeFromJson = "dt";
+
+            long unixTime = singleDayJson.getLong(OWM_UnixTimeFromJson);
+            Date timeInUnixFormatInMiliseconds = new Date(unixTime*1000);
+            SimpleDateFormat simpleFormatOfDayAndTime = new SimpleDateFormat("E, d/MM/yy");
+            String readableDayAndTimeLowercase = simpleFormatOfDayAndTime.format(timeInUnixFormatInMiliseconds);
+
+            return Character.toUpperCase(readableDayAndTimeLowercase.charAt(0)) + readableDayAndTimeLowercase.substring(1);
+        }
+
+        private String getWeatherShortInfoFromSingleDayJson(JSONObject singleDayJson) throws JSONException {
+            final String OWM_weatherInfo = "weather";
+            final String OWM_weatherShortStatus = "main";
+
+            return singleDayJson.getJSONArray(OWM_weatherInfo).getJSONObject(0).getString(OWM_weatherShortStatus);
+        }
+
+        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays) throws JSONException {
+            final String OWM_listOfDays = "list";
 
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
-            JSONArray listDayJson = forecastJson.getJSONArray(OWM_list);
-
-
+            JSONArray listOfDayJson = forecastJson.getJSONArray(OWM_listOfDays);
             String[] resultWeatherForecastString = new String[numDays];
-            for(int i=0; i < listDayJson.length() ;i++) {
-                String description;
-                String highestAndLowestTemperatureRounded;
-                String dayAndTime;
 
-                JSONObject singleDayJson = listDayJson.getJSONObject(i);
-
-
-                //wyciągniecie opisu (main) listArray[i].weatherArray[0].main
-                JSONObject weatherForSingleDayJson = singleDayJson.getJSONArray(OWM_weather).getJSONObject(0);
-                description = weatherForSingleDayJson.getString(OWM_desciptionshort);
-
-                // wyciągniecie czasu w formacie "Mon 5/24" ->
-                long dateAndTimeInUnixJson = singleDayJson.getLong(OWM_unitdatetime);
-                dayAndTime = getReadableDateAndTimeFromUnix(dateAndTimeInUnixJson);
-                String capitalizedDayAndTime = Character.toUpperCase(dayAndTime.charAt(0)) + dayAndTime.substring(1);
-
-
-                // wyciągniecie tempMax/tempMin - listArray[i].tempObject.min/max
-                JSONObject temperatureForSingleDayJson = singleDayJson.getJSONObject(OWM_temperature);
-                long lowestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_mintemperature));
-                long highestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_maxtemperature));
-                highestAndLowestTemperatureRounded = highestTemperatureRounded + "/" + lowestTemperatureRounded;
-
-                resultWeatherForecastString[i] = capitalizedDayAndTime + " - " + description + " - " + highestAndLowestTemperatureRounded;
+            for(int i=0; i < listOfDayJson.length() ;i++) {
+                JSONObject singleDayJson = listOfDayJson.getJSONObject(i);
+                resultWeatherForecastString[i] = getReadableDateAndTimeFromSingleDayJson(singleDayJson) + " - " + getWeatherShortInfoFromSingleDayJson(singleDayJson) + " - " + getReadableMinMaxTemperatureRoundedFromSingleDayJson(singleDayJson);
             }
 
             for(String s : resultWeatherForecastString) {
