@@ -35,6 +35,8 @@ import java.util.List;
  */
 public class ForecastFragment extends Fragment {
 
+    private ArrayAdapter<String> mForecastAdapter;
+
     public ForecastFragment() {
 
     }
@@ -77,12 +79,12 @@ public class ForecastFragment extends Fragment {
         };
 
         List<String> listOfExamplesForWeatherTextView = new ArrayList<String>(Arrays.asList(examplesOfWeatherForTextView));
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, listOfExamplesForWeatherTextView);
+        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, listOfExamplesForWeatherTextView);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(forecastAdapter);
+        listView.setAdapter(mForecastAdapter);
 
         return rootView;
     }
@@ -166,7 +168,7 @@ public class ForecastFragment extends Fragment {
                         .appendQueryParameter(UNITS_PARAM,units)
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                         .build();
-                Log.v(LOG_TAG, "SUNSHINE builtUri String: " + builtUri.toString());
+                //Log.v(LOG_TAG, "SUNSHINE builtUri String: " + builtUri.toString()); // Logging the built Url using Uri method
                 URL url = new URL(builtUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
@@ -196,7 +198,7 @@ public class ForecastFragment extends Fragment {
                     return null;
                 }
                 forecastJsonStr = buffer.toString();
-                Log.v(LOG_TAG, "SUNSHINE Forecast JSON string: " + forecastJsonStr);
+                //Log.v(LOG_TAG, "SUNSHINE Forecast JSON string: " + forecastJsonStr); // Logging the full JSON string from server
 
             } catch (IOException e) {
                 Log.e(LOG_TAG, "SUNSHINE Error ", e);
@@ -222,6 +224,15 @@ public class ForecastFragment extends Fragment {
                 e.printStackTrace();
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String[] result) {
+            if (result !=null) {
+                mForecastAdapter .clear();
+                for(String dayForecastStr : result)
+                    mForecastAdapter.add(dayForecastStr);
+            }
         }
     }
 }
