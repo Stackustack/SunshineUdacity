@@ -58,11 +58,13 @@ public class DetailActivity extends ActionBarActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
+                                 Bundle savedInstanceState) 
             Intent intent = getActivity().getIntent();
             View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-            String simpleForecastForSelectedDayFromMainView = intent.getStringExtra(Intent.EXTRA_TEXT);
-            ((TextView) rootView.findViewById(R.id.simpleForecastFromSelectedDayTextView)).setText(simpleForecastForSelectedDayFromMainView);
+            if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
+                String simpleForecastForSelectedDayFromMainView = intent.getStringExtra(Intent.EXTRA_TEXT);
+                ((TextView) rootView.findViewById(R.id.simpleForecastFromSelectedDayTextView)).setText(simpleForecastForSelectedDayFromMainView);
+            }
             return rootView;
         }
     }
