@@ -1,9 +1,11 @@
 package com.stackustack.sunshine_udacity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,9 +30,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -58,12 +58,9 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
-            fetchWeatherTask.execute("Poznan,pl");
+            updateWeather();
             return true;
         }
-
-
 
         return super.onOptionsItemSelected(item);
     }
@@ -72,18 +69,8 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        String[] examplesOfWeatherForTextView = {
-                "Mon 6/23 - Sunny - 31/17",
-                "Tue 6/24 - Foggy - 21/8",
-                "Wed 6/25 - Cloudy - 22/17",
-                "Thurs 6/26 - Rainy - 18/11",
-                "Fri 6/27 - Foggy - 21/10",
-                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
-                "Sun 6/29 - Sunny - 20/7"
-        };
 
-        List<String> listOfExamplesForWeatherTextView = new ArrayList<String>(Arrays.asList(examplesOfWeatherForTextView));
-        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, listOfExamplesForWeatherTextView);
+        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, new ArrayList<String>());
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -101,6 +88,22 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
+    private void updateWeather() {
+        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String locationFromPrefs = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        fetchWeatherTask.execute(locationFromPrefs);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+
+
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
@@ -111,9 +114,23 @@ public class ForecastFragment extends Fragment {
             final String OWM_mintemperature = "min";
 
             JSONObject temperatureForSingleDayJson = singleDayJson.getJSONObject(OWM_temperature);
-            long lowestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_mintemperature));
-            long highestTemperatureRounded = Math.round(temperatureForSingleDayJson.getDouble(OWM_maxtemperature));
-            return highestTemperatureRounded + "/" + lowestTemperatureRounded;
+            double lowestTemperature = temperatureForSingleDayJson.getDouble(OWM_mintemperature);
+            double highestTemperature = temperatureForSingleDayJson.getDouble(OWM_maxtemperature);
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = prefs.getString(getString(R.string.pref_units_key), getString(R.string.pref_units_metric));
+
+            if (unitType.equals(getString(R.string.pref_units_imperial))) {
+                lowestTemperature = (lowestTemperature * 1.8) +32 ;
+                highestTemperature = (highestTemperature * 1.8) + 32;
+            } else if (!unitType.equals(getString(R.string.pref_units_metric))) {
+                Log.d(LOG_TAG, "SUNISHINE Unit type not found: " + unitType);
+            }
+
+            long lowestTemperatureRounded = Math.round(lowestTemperature);
+            long highestTemperatureRounded = Math.round(highestTemperature);
+
+            return lowestTemperatureRounded + " / " + highestTemperatureRounded;
         }
 
         private String getReadableDateAndTimeFromSingleDayJson(JSONObject singleDayJson) throws JSONException {
@@ -180,7 +197,7 @@ public class ForecastFragment extends Fragment {
                         .appendQueryParameter(UNITS_PARAM,units)
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                         .build();
-                //Log.v(LOG_TAG, "SUNSHINE builtUri String: " + builtUri.toString()); // Logging the built Url using Uri method
+                Log.v(LOG_TAG, "SUNSHINE builtUri String: " + builtUri.toString()); // Logging the built Url using Uri method
                 URL url = new URL(builtUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
